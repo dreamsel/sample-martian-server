@@ -4,7 +4,10 @@ const fieldFactory = require('./fields/field');
 const TERRAIN = require('./constants/terrain');
 const RESOURCES = require('./constants/resources');
 
-const EPOCH_LENGTH = 100;
+require('dotenv').load();
+
+const EPOCH_LENGTH = process.env.EPOCH_LENGTH || 100;
+const EPOCH_PAUSE = process.env.EPOCH_PAUSE || 30000;
 
 const generateFields = process.argv[2] === 'generate';
 const loadField = process.argv[2] === 'load';
@@ -62,9 +65,9 @@ let processIPs = (players, clients, settings) => {
         }
       }
     });
-    setTimeout(processIPs, 10 * 60000); // pause 10 minutes
+    setTimeout(processIPs, EPOCH_PAUSE); // pause 10 minutes
   } else {
-    setTimeout(processIPs, 2000);
+    setTimeout(processIPs, 1000);
   }
 };
 
@@ -86,7 +89,7 @@ const Worker = (clients, settings) => {
     player.fieldData.resources[player.base.y][player.base.x] = RESOURCES.NONE;
   });
   processIPs = processIPs.bind(null, players, clients, settings);
-  setTimeout(processIPs, 5000);
+  setTimeout(processIPs, 3000);
   return players;
 };
 
