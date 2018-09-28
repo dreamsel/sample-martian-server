@@ -7,12 +7,20 @@ const TERRAIN = require('./constants/terrain');
 
 function processPlayerMove (roversActions, player, settings) {
   const fieldData = player.fieldData;
-  const response = { errors: {}, base: player.base, rovers: player.rovers, FIELD_SIZE: fieldData.FIELD_SIZE, epoch: settings.epoch, step: settings.step };
+  const response = {
+    errors: {},
+    base: player.base,
+    rovers: player.rovers.map(rover => ({...rover, area: [[], [], []]})),
+    FIELD_SIZE: fieldData.FIELD_SIZE,
+    epoch: settings.epoch,
+    step: settings.step
+  };
   if (!Array.isArray(roversActions)) {
     console.log('probably error ', roversActions ? roversActions.error : '', roversActions);
     response.errors = 'wrong rover actions';
     return response;
   }
+  const responseRovers = [];
   roversActions.slice(0, player.max_rovers).forEach(action => { // TODO handle 2 actions for same rover
     const rover = player.rovers.find(rover => rover.id == action.rover_id); /* eslint-disable-line eqeqeq */
     if (rover) {
@@ -76,6 +84,8 @@ function processPlayerMove (roversActions, player, settings) {
         case 'charge':
           rover.energy += ROVER.CHARGE_IN_FIELD;
           break;
+        case 'none':
+          break;
       }
 
       // prepare info about new state of rover and its surroundings (may be other player dig smth)
@@ -97,13 +107,15 @@ function processPlayerMove (roversActions, player, settings) {
           }
         }
       }
-
-      rover.area = area;
+      responseRovers.push({...rover, area});
+      // rover.area = area;
     } else {
       response.errors[action.rover_id] = {code: ERRORS.WRONG_ROVER_ID, message: `wrong rover id ${action.rover_id}`};
     }
   });
-
+  if (responseRovers.length > 0) {
+    response.rovers = responseRovers;
+  }
   return response;
 }
 

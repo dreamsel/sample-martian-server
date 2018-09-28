@@ -22,9 +22,12 @@ let processIPs = (players, clients, settings) => {
     console.log('processing key', key);
     const client = clients[key];
     const player = players.find(player => player.key === client.key);
-    if (player && client.clientAnswer) {
+    if (player) {
+      const roversActions = client.clientAnswer && Array.isArray(client.clientAnswer) && client.clientAnswer.length > 0
+        ? client.clientAnswer
+        : player.rovers.map(rover => ({rover_id: rover.id, action_type: 'none'}));
       // process player and client.clientAnswer
-      const response = processPlayerMove(client.clientAnswer, player, settings);
+      const response = processPlayerMove(roversActions, player, settings);
       client.clientAnswer = null;
       if (client.connection) {
         client.connection.send(JSON.stringify({command: 'move', data: response}));
@@ -77,14 +80,6 @@ const Worker = (clients, settings) => {
   settings.epoch = 0; // or load from db
   const players = PlayersInfo.loadPlayers(field);
   players.forEach(player => {
-    player.response = {
-      base: player.base,
-      points: player.points,
-      max_rovers: player.max_rovers,
-      resources: player.resources,
-      rovers: player.rovers.map(rover => ({...rover, area: [[], [], []]})),
-      errors: [],
-    };
     player.fieldData.field[player.base.y][player.base.x] = TERRAIN.BASE; // to be sure
     player.fieldData.resources[player.base.y][player.base.x] = RESOURCES.NONE;
   });
